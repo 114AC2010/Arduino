@@ -1,0 +1,84 @@
+const int RledPin = 9;       
+const int GledPin = 10;      
+const int BledPin = 11;       
+const int buttonPin = 2;      
+
+int mood = 50;               
+const int maxMood = 100;      
+const int neutralMood = 50; 
+const int minMood = 0;      
+
+unsigned long previousMillis = 0;
+unsigned long currentMillis = 0;
+bool ButtonPressed = false;
+
+void showLEDState(int state);
+
+void setup() {
+  pinMode(RledPin, OUTPUT);
+  pinMode(GledPin, OUTPUT);
+  pinMode(BledPin, OUTPUT);
+  
+  pinMode(buttonPin, INPUT_PULLUP); 
+
+  mood = neutralMood;
+}
+
+void loop() {
+  showLEDState(mood);
+
+ 
+  int buttonState = digitalRead(buttonPin);
+  
+  // 按下按鈕（INPUT_PULLUP 模式下按下為 LOW）
+  if (buttonState == LOW && !ButtonPressed) {
+    mood = mood + 2;               
+    if (mood > maxMood) mood = maxMood; 
+    ButtonPressed = true;
+    previousMillis = millis();     
+  }
+  
+
+  if (buttonState == HIGH && ButtonPressed) {
+    ButtonPressed = false;
+  }
+}
+
+void showLEDState(int state) {
+  int redVal = 0;
+  int greenVal = 0;
+  int blueVal = 0;
+
+
+  if (state >= maxMood) {
+    // 達到 100 分：完全停留在純藍光
+    redVal   = 0;
+    greenVal = 0;
+    blueVal  = 255;
+  } 
+  else if (state >= neutralMood) {
+    // 50 ~ 99 分：
+    redVal   = 0;
+    greenVal = map(state, neutralMood, maxMood, 255, 0); 
+    blueVal  = map(state, neutralMood, maxMood, 0, 255); 
+  } 
+  else {
+  
+    redVal   = map(state, minMood, neutralMood, 255, 0); 
+    greenVal = map(state, minMood, neutralMood, 0, 255); 
+    blueVal  = 0;
+  }
+
+  
+  analogWrite(RledPin, redVal);
+  analogWrite(GledPin, greenVal);
+  analogWrite(BledPin, blueVal);
+
+ 
+  currentMillis = millis();
+  if (currentMillis - previousMillis > 3000) { 
+    mood = mood - 10;
+    if (mood < minMood) mood = minMood; 
+    previousMillis = currentMillis;
+  }
+}
