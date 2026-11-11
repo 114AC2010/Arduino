@@ -1,0 +1,207 @@
+// The Pin of the push button
+// The Pin of the push button
+const int buttonPin = 2;
+// The Pin of the RGB LED Module
+const int RLedPin = 9;
+const int GLedPin = 10;
+const int BLedPin = 11;
+
+// The current Push button state
+int buttonState = 0;
+// The variable used to memorize whether the user have pressed the button
+bool buttonPressed = false;
+// The timer used to count the pressing time
+unsigned long pressingTime = 0;
+// The threshold of the long press interval
+const int longPressInterval = 2000;
+
+// The Current Light Stick number
+// 0: white, 1: red, 2: green, 3: blue, 4: yellow....
+int lightNum = 0;
+// The Current Light Stick Color
+int RLightColor = 0;
+int GLightColor = 0;
+int BLightColor = 0;
+
+// Light Stick Current Mode (0: Constant, 1: Blink, 2: Fading)
+int currentMode = 0;
+
+// Variables for blink mode
+unsigned long blinkTimer = 0;
+const int blinkInterval = 500;
+bool blinkOn = true;
+
+// Variables for fading mode
+int fadeDirection = 1;
+int fadeAmount = 5;
+
+// Output color variables used in updateLEDColor
+int RCurrentColor = 0;
+int GCurrentColor = 0;
+int BCurrentColor = 0;
+
+void setup()
+{
+    pinMode(buttonPin, INPUT);
+    pinMode(RLedPin, OUTPUT);
+    pinMode(GLedPin, OUTPUT);
+    pinMode(BLedPin, OUTPUT);
+}
+
+void loop()
+{
+    checkButton();
+    updateLEDColor();
+    setRGBLEDColor(RCurrentColor, GCurrentColor, BCurrentColor);
+}
+
+void checkButton(){
+    // Read the button state
+    buttonState = digitalRead(buttonPin);
+
+    if(buttonState == HIGH && !buttonPressed){
+        pressingTime = millis();
+        buttonPressed = true;
+    }
+    if(buttonState == LOW && buttonPressed){
+        unsigned long currentTime = millis();
+        if(currentTime - pressingTime < longPressInterval){
+            // short click
+            changeLEDColor();
+        }
+        else{
+            // long press
+            changeMode();
+        }
+        buttonPressed = false;
+    }
+}
+
+void changeLEDColor(){
+    // Increase the light number
+    lightNum = lightNum + 1;
+    if(lightNum >= 5)
+        lightNum = 0;
+
+    // Set the RGB Light Color according to the light number
+    if(lightNum == 0){
+        // white
+        RLightColor = 0;
+        GLightColor = 0;
+        BLightColor = 0;
+    }
+    else if(lightNum == 1){
+        // red
+        RLightColor = 0;
+        GLightColor = 255;
+        BLightColor = 255;
+    }
+    else if(lightNum == 2){
+        // green
+        RLightColor = 255;
+        GLightColor = 0;
+        BLightColor = 255;
+    }
+    else if(lightNum == 3){
+        // blue
+        RLightColor = 255;
+        GLightColor = 255;
+        BLightColor = 0;
+    }
+    else if(lightNum == 4){
+        // yellow
+        RLightColor = 0;
+        GLightColor = 0;
+        BLightColor = 255;
+    }
+
+    // 將目前的顏色設定同步給輸出變數
+    RCurrentColor = RLightColor;
+    GCurrentColor = GLightColor;
+    BCurrentColor = BLightColor;
+}
+
+void changeMode(){
+    currentMode = currentMode + 1;
+    if(currentMode >= 3){
+        currentMode = 0;
+    }
+    // Reset variables for blinking effects
+    if(currentMode == 1){
+        blinkTimer = millis();
+        blinkOn = true;
+    }
+}
+
+void updateLEDColor(){
+    if(currentMode == 0){
+        // Constant Light Mode
+        RCurrentColor = RLightColor;
+        GCurrentColor = GLightColor;
+        BCurrentColor = BLightColor;
+    }
+    else if(currentMode == 1){
+        // Blink Mode
+        unsigned long currentTime = millis();
+        if(currentTime - blinkTimer > blinkInterval){
+            blinkOn = !blinkOn;
+            blinkTimer = currentTime;
+        }
+
+        if(blinkOn){
+            RCurrentColor = RLightColor;
+            GCurrentColor = GLightColor;
+            BCurrentColor = BLightColor;
+        }
+        else{
+            RCurrentColor = 255;
+            GCurrentColor = 255;
+            BCurrentColor = 255;
+        }
+    }
+    else if(currentMode == 2){
+        // Fading Light Mode (Breathing Light Mode)
+        bool negativeDir = false;
+
+        // Red channel fading
+        if(RLightColor == 0){
+            RCurrentColor = RCurrentColor + fadeDirection * fadeAmount;
+            if((RCurrentColor > 255) || (RCurrentColor < 0)){
+                negativeDir = true;
+            }
+        }
+        if(RCurrentColor < 0) RCurrentColor = 0;
+        if(RCurrentColor > 255) RCurrentColor = 255;
+
+        // Green channel fading
+        if(GLightColor == 0){
+            GCurrentColor = GCurrentColor + fadeDirection * fadeAmount;
+            if((GCurrentColor > 255) || (GCurrentColor < 0)){
+                negativeDir = true;
+            }
+        }
+        if(GCurrentColor < 0) GCurrentColor = 0;
+        if(GCurrentColor > 255) GCurrentColor = 255;
+
+        // Blue channel fading
+        if(BLightColor == 0){
+            BCurrentColor = BCurrentColor + fadeDirection * fadeAmount;
+            if((BCurrentColor > 255) || (BCurrentColor < 0)){
+                negativeDir = true;
+            }
+        }
+        if(BCurrentColor < 0) BCurrentColor = 0;
+        if(BCurrentColor > 255) BCurrentColor = 255;
+
+        if(negativeDir){
+            fadeDirection = -fadeDirection;
+        }
+        delay(10);
+    }
+}
+
+void setRGBLEDColor(int r, int g, int b){
+    analogWrite(RLedPin, r);
+    analogWrite(GLedPin, g);
+    analogWrite(BLedPin, b);
+}
