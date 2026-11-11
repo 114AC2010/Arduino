@@ -1,0 +1,75 @@
+const int buttonPin = 2; 
+const int ledPin = 3;    
+
+
+int buttonState = 0;
+int lastButtonState = HIGH; 
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+
+
+int mode = 0;
+
+
+unsigned long previousMillis = 0;
+int ledOutputState = LOW;
+
+void setup() {
+    pinMode(buttonPin, INPUT_PULLUP);
+    pinMode(ledPin, OUTPUT);        
+}
+
+void loop() {
+    
+    int reading = digitalRead(buttonPin);
+
+    if (reading != lastButtonState) {
+        lastDebounceTime = millis();
+    }
+
+    if ((millis() - lastDebounceTime) > debounceDelay) {
+        if (reading != buttonState) {
+            buttonState = reading;
+
+            if (buttonState == LOW) {
+                mode = mode + 1; 
+                if (mode > 3) {
+                    mode = 0;    
+                }
+            }
+        }
+    }
+    lastButtonState = reading;
+
+    
+    unsigned long currentMillis = millis();
+
+    if (mode == 0) {
+        // 狀態 0：【衡亮】（共陽極：輸出 LOW 才會亮）
+        digitalWrite(ledPin, LOW);
+    } 
+    else if (mode == 1) {
+       
+        if (currentMillis - previousMillis >= 800) {
+            previousMillis = currentMillis;
+            ledOutputState = !ledOutputState;
+            digitalWrite(ledPin, ledOutputState);
+        }
+    } 
+    else if (mode == 2) {
+        
+        if (currentMillis - previousMillis >= 400) {
+            previousMillis = currentMillis;
+            ledOutputState = !ledOutputState;
+            digitalWrite(ledPin, ledOutputState);
+        }
+    } 
+    else if (mode == 3) {
+        
+        if (currentMillis - previousMillis >= 150) {
+            previousMillis = currentMillis;
+            ledOutputState = !ledOutputState;
+            digitalWrite(ledPin, ledOutputState);
+        }
+    }
+}
