@@ -115,7 +115,7 @@ void changeLEDColor(){
         BLightColor = 255;
     }
 
-    // 將目前的顏色設定同步給輸出變數
+    
     RCurrentColor = RLightColor;
     GCurrentColor = GLightColor;
     BCurrentColor = BLightColor;
